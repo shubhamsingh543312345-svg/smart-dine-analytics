@@ -63,7 +63,7 @@ The report. Four pages: Demand, Delay, Quality and Decisions.
 7. Answered the business questions with SQL. I had to TRIM join keys because some ids still had spaces.
 8. Connected the same four tables in Power BI and built the report.
 
-![Hop pipeline](docs/05-hop-pipeline.png)
+![Hop pipeline](docs/docs05-hop-pipeline.png)
 
 ---
 
