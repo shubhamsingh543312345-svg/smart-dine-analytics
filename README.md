@@ -1,6 +1,6 @@
 # Smart-Dine Analytics 🍽️📊
 
-Food-delivery data, cleaned and turned into decisions.
+Ordering platform data, prepped and transformed into decisions.
 
 MySQL → Apache Hop → Databricks → Power BI
 
@@ -8,75 +8,73 @@ MySQL → Apache Hop → Databricks → Power BI
 
 ## About this project
 
-This project takes restaurant order data from a source database, cleans it, stores it in a warehouse, and shows the result in a four-page Power BI report.
+In this project, data is taken from an original database, cleaned and stored in a warehouse for analysis and visualization in four pages Power BI report.
 
-I did not start with charts. I started with a simple question: can we trust this file enough to make a decision?
+The goal was not to build charts right away. The goal was to ask a simple question - could this dataset be trusted for any business decisions?
 
-There are four tables. `fact_order_lines` is each item on a bill (30,000 rows). Around it sit customers (1,500), products (50) and locations (15). That shape is a star schema. In Power BI it is just three relationships:
+There are four tables. `fact_order_lines` contains every item on the receipt (30,000 rows). Around it there are customers (1,500), products (50) and locations (15). This structure is called star schema. In Power BI it looks like this three relationships:
 
 - fact.customer_id → dim_customers.customer_id
 - fact.product_id → dim_products.product_id
 - fact.location_id → dim_locations.location_id
 
-A line is one item on a bill. A bill is the whole order. The data has about 30,000 items and about 12,000 bills.
+A line is an item on the receipt. A receipt is a bill. There are around 30,000 items in 12,000 bills.
 
 ---
 
 ## Business problem
 
-A delivery brand needs to know:
+A food delivery brand needs to understand the following questions:
 
-- which cities bring the most orders
-- what the kitchen should stock first
-- whether customers wait too long
-- whether finance can trust the sales column
-- whether VIP customers actually spend more
+- which cities produce the largest amount of orders
+- what stocks the kitchen should hold first
+- does customer have to wait too long for an order
+- does finance department trust sales column
+- do VIP customers really spend more
 
-The raw data could not answer that cleanly. The same city was written as `DELHI`, `New Delhi` and `mumbai`. Some prices were empty. Some were negative. If you sum the sales column as-is, the company total is wrong. If you group by the raw city name, Delhi looks like two different markets.
+However, this raw data cannot be used to make such a statement directly. The same city is described in multiple ways as `DELHI`, `New Delhi` and `mumbai`. There were some negative numbers in the price column. And if you sum up the sales column as it is, the company total will be wrong. If you aggregate by the raw city column, Delhi will seem to have two markets.
 
 ---
 
-## Tools and why I used them
+## Tools and their role in this project
 
 **MySQL**  
-Source system. I loaded the four raw tables here. I did not build the report on top of MySQL.
+This is the source system where I loaded four raw tables. I didn't create the report based on MySQL.
 
 **Apache Hop**  
-Cleaning. I trimmed extra spaces, mapped messy city names to one clean city, tagged every sales row as VALID, MISSING or NEGATIVE, and wrote the 250 bad rows to a reject file. I did not delete those rows. If you delete the mess, nobody can see there was a mess.
+Cleaning process. I removed unnecessary spaces from strings, normalized city values into one consistent city name, classified each row from sales column as either VALID, MISSING or NEGATIVE and saved 250 rows with the problem into separate reject file. I didn't delete any rows as it is important to demonstrate the problem existed.
 
 **Databricks**  
-Warehouse. This is where I ran SQL, joined the four tables, and got the numbers that sit behind the dashboard.
+A data warehouse where I performed SQL, joined the four tables and received the data that powers the dashboard.
 
 **Power BI**  
-The report. Four pages: Demand, Delay, Quality and Decisions.
-
+This is the report which consists of 4 pages: Demand, Delay, Quality and Decisions.
 ---
 
-## What I did, step by step
+## What I did
 
-1. Loaded the four tables into MySQL.
-2. Built a Hop pipeline that reads those tables.
-3. Trimmed text and mapped city names (`DELHI` and `New Delhi` both became Delhi).
-4. Flagged sales quality and sent bad rows to a reject file.
-5. Loaded the small dimension tables into Databricks from Hop.
-6. Loaded the fact table from a cleaned CSV because a live Hop insert of 30,000 rows was too slow on the free warehouse.
-7. Answered the business questions with SQL. I had to TRIM join keys because some ids still had spaces.
-8. Connected the same four tables in Power BI and built the report.
+1. Loaded the four tables in MySQL.
+2. Created a Hop pipeline that loads these tables.
+3. Cleaned text and standardized city names (`DELHI` and `New Delhi` were standardized as Delhi).
+4. Marked the sales data quality issues and moved them to a reject file.
+5. Loaded the dimension tables, which are smaller in size, in Databricks via Hop.
+6. Loaded the fact table in Databricks using the cleaned CSV since live insert of 30,000 rows in Hop was not working well in the free warehouse.
+7. Answered the business questions with SQL, but had to TRIM the join keys since some ids had spaces.
+8. Connected the same four tables in Power BI and created the report.
 
 ![Hop pipeline](docs/docs05-hop-pipeline.png)
 
 ---
 
-## Problems I hit and how I fixed them
+## Issues I ran into and how I solved them
 
-Loading 30,000 fact rows through Hop into Databricks was too slow on the free warehouse. I wrote a cleaned CSV and uploaded that instead.
+It took forever to upload 30,000 rows of facts into Databricks through Hop on the free Databricks instance. So I uploaded the clean CSV file instead.
 
-Databricks preview often showed only 100 rows. I used COUNT(*) after that. The real counts are 1,500 / 50 / 15 / 30,000.
+Preview from Databricks showed only 100 rows. Used COUNT(*) afterwards. The actual numbers are 1,500 / 50 / 15 / 30,000.
 
-Joins came back empty because some ids still had spaces. TRIM on the keys fixed it.
+Join didn’t show any results due to presence of whitespace in some id values. Using TRIM on the join keys helped.
 
-I also learned not to leave Truncate on, and not to overwrite the wrong table. Both wiped data I then had to load again.
-
+Another thing is to not leave Truncate on and not to overwrite the wrong table. Both resulted in data loss which had to be uploaded again.
 ---
 
 ## Dashboard
@@ -86,28 +84,28 @@ I also learned not to leave Truncate on, and not to overwrite the wrong table. B
 ![Quality](docs/03-quality.png)
 ![Decisions](docs/04-decisions.png)
 
-Demand shows where orders come from, what sells, and when in the day.  
-Delay shows waiting time.  
-Quality shows bad prices and messy city names.  
-Decisions is what I would actually tell a manager.
+Demand is a measure of where the orders come from, what is selling, and when during the day.
+Delay is the measure of waiting time.
+Quality is a measure of low prices and confusing city names.
+Decisions are what I would recommend to a manager.
 
 ---
 
 ## Answers from the dashboard
 
-- 29,750 items we can trust, on 11,643 bills. Average bill about ₹2,025. Sales about ₹23.58 million.
-- Delhi, Mumbai and Lucknow take most of the all-day demand.
-- At dinner (7–10 pm) Mumbai is first. That is where I would add staff.
-- Main Course sells the most plates. Stock that first.
-- Average wait looks okay at about 50 minutes. It is not okay when 37% of items take more than an hour.
-- Peak hours are not slower than quiet hours. The wait problem is everywhere, not only at dinner.
-- VIP bills are only about ₹40 higher than Regular. Regular places about five times more orders. The business is Regular customers.
-- 100 prices are missing and 150 are negative. Finance should add VALID sales only.
+- 29,750 valid items, on 11,643 bills. Average bill amount of about ₹2,025. Sales amount of about ₹23.58 million.
+- Most demand occurs in the cities of Delhi, Mumbai, and Lucknow throughout the day.
+- In the evening (7-10 pm), Mumbai is first. This is where I would hire additional employees.
+- The category that sells the most plates is Main Course. Order stock of this first.
+- Average delay seems fine, about 50 minutes. However, it is a problem when 37% of all items require more than an hour.
+- There is no difference in peak and quiet hours in terms of speed.
+- VIP bills are just ₹40 higher on average than Regular. Regular restaurants order about five times more than VIP. Our business is about Regular customers.
+- There are 100 missing prices and 150 negative ones. Only VALID sales should be considered by Finance.
 
 ---
 
 ## Short version
 
-I asked if the data was trustworthy first. Then I cleaned cities, flagged bad sales, ran SQL, and built four pages. The charts came last.
+I checked if the data was reliable first. Next, I cleaned cities, detected anomalies, executed SQL, and created four dashboards. Graphs were created last.
 
 SQL · Hop · Databricks · Power BI · data quality
