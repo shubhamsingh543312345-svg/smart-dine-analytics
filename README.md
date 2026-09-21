@@ -104,7 +104,7 @@ Decisions are what I would recommend to a manager.
 
 ---
 
-## Short version
+## In Short 
 
 I checked if the data was reliable first. Next, I cleaned cities, detected anomalies, executed SQL, and created four dashboards. Graphs were created last.
 
